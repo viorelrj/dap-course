@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+service CrawlerSupervisor {
+  rpc submit (SubmitRequest) returns (SubmitResponse) {}
+}
+
+message SubmitRequest {
+  string origin = 1;
+  repeated string links = 2;
+  repeated string keywords = 3;
+}
+
+message SubmitResponse {
+  string response = 1;
+}

@@ -1,0 +1,9 @@
+services:
+  processed_db:
+    image: postgres
+    env_file:
+      - src/db_processed/db_processed.env
+    ports:
+      - "3000:5432"
+  crawler:
+    build: src/crawler
