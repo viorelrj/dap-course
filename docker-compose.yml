@@ -7,3 +7,7 @@ services:
       - "3000:5432"
   crawler:
     build: src/crawler
+  parsed_sup:
+    build: src/parsed_sup
+    ports:
+      - "3001:50051"

@@ -7,7 +7,7 @@ from random import random
 
 class CrawlerSupervisorServicer(CrawlerSupervisorServicer):
   def submit(self, request, context):
-    print(random(), list(request.links))
+    print(random(), request, flush=True)
     return SubmitResponse()
 
 
