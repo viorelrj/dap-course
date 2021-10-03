@@ -4,10 +4,10 @@ import grpc
 from concurrent import futures
 from random import random
 
-
+print("Starting server...", flush=True)
 class CrawlerSupervisorServicer(CrawlerSupervisorServicer):
   def submit(self, request, context):
-    print(random(), request, flush=True)
+    print(4001, request, flush=True)
     return SubmitResponse()
 
 
