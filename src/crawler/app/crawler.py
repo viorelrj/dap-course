@@ -14,11 +14,17 @@ class BlogSpider(scrapy.Spider):
   def __init__(self,*args, **kwargs):
     super(BlogSpider, self).__init__(*args, **kwargs)
 
-  def parse(self, response):
-    stub.submit.future(SubmitRequest(
-        origin='https://www.google.com'), wait_for_ready=True)
-    for title in response.css('.oxy-post-title'):
-      pass
+def parse(self, response):
+    stub.submit.future(
+      SubmitRequest(
+        origin=response.url,
+        links=list(filter(lambda x: len(x) > 1, set(response.css('a::attr(href)').extract()))),
+        keywords=[response.css('.oxy-post-title').split(' ')]
+      ),
+      wait_for_ready=True
+    )
+    # for title in response.css('.oxy-post-title'):
+    #   pass
     for next_page in response.css('a.next'):
       yield response.follow(next_page, self.parse)
 

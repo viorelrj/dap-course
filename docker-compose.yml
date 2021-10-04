@@ -7,7 +7,9 @@ services:
     ports:
       - "3000:5432"
   parsed_sup:
-    build: src/parsed_sup
+    build:
+      context: ./src
+      dockerfile: ./parsed_sup/Dockerfile
     ports:
       - "3001:50051"
   crawler:
