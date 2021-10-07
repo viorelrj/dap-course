@@ -7,9 +7,9 @@ from db_processed import Keyword, session_factory
 
 session = session_factory()
 
-session.add(Keyword(keyword='test'))
-session.commit()
-session.close()
+# session.add(Keyword(keyword='test'))
+# session.commit()
+# session.close()
 
 
 class CrawlerSupervisorServicer(CrawlerSupervisorServicer):
