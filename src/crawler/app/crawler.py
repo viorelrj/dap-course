@@ -5,10 +5,14 @@ from crawler_pb2 import SubmitRequest
 import re
 import string
 
-table = str.maketrans('', '', string.punctuation)
+translation_table = str.maketrans('', '', string.punctuation)
 
-channel = grpc.insecure_channel('parsed_sup:50051')
+channel = grpc.insecure_channel('localhost:50051')
 stub = CrawlerSupervisorStub(channel)
+
+
+def flatten_list(list_of_lists):
+  return [item for sublist in list_of_lists for item in sublist]
 
 
 class BlogSpider(scrapy.Spider):
@@ -20,24 +24,27 @@ class BlogSpider(scrapy.Spider):
 
   def parse(self, response):
     important_sentences = list(map(lambda x: x.css('*::text').getall(), response.css('h1, h1 *, title, title *')))
-    keywords = list(map(lambda x: self._get_words(
-        x), [item for sublist in important_sentences for item in sublist]))
+    keywords_lists = list(map(lambda x: self._get_words(
+        x), flatten_list(important_sentences)))
+    keywords = flatten_list(keywords_lists)
 
     stub.submit.future(
       SubmitRequest(
         origin=response.url,
         links=list(filter(lambda x: len(x) > 1, set(response.css('a::attr(href)').extract()))),
-        keywords=['test']
+        keywords=keywords
       ),
       wait_for_ready=True
     )
     # for title in response.css('.oxy-post-title'):
     #   pass
-    for next_page in response.css('a'):
+    for next_page in response.css('a[href]'):
       yield response.follow(next_page, self.parse)
 
   def _get_words(self, text):
     words = filter(lambda x: len(x), re.split(r'\W+', text))
-    stripped = [w.translate(table) for w in words]
+    stripped = [w.translate(translation_table) for w in words]
     lowercase = [word.lower() for word in stripped]
     return lowercase
+
+

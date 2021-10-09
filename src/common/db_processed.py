@@ -24,7 +24,7 @@ keywords_urls_assotiation = Table(
 class Keyword(Base):
   __tablename__ = 'keywords'
   keyword = Column(String, primary_key=True)
-  urls = relationship('Url', secondary=keywords_urls_assotiation, backref='keywords')
+  
 
   def __init__(self, keyword):
     self.keyword = keyword
@@ -32,7 +32,8 @@ class Keyword(Base):
 class Url(Base):
   __tablename__ = 'urls'
   url = Column(String, primary_key=True)
+  keywords = relationship('Keyword', secondary=keywords_urls_assotiation)
 
-  def __init__(self, url):
+  def __init__(self, url, keywords):
     self.url = url
-
+    self.keywords = keywords

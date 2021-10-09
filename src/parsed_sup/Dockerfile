@@ -1,4 +1,4 @@
-FROM python
+FROM python:3.8.11
 COPY ./parsed_sup/app/ /app/
 COPY ./parsed_sup/requirements.txt /requirements.txt
 COPY ./common/ /app/
