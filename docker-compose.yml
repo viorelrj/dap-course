@@ -14,3 +14,10 @@ services:
       - "3001:50051"
   crawler:
     build: src/crawler
+
+  service:
+    build:
+      context: ./src
+      dockerfile: ./service/Dockerfile
+    ports:
+      - "3002:5000"
