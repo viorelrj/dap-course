@@ -7,7 +7,7 @@ import string
 
 translation_table = str.maketrans('', '', string.punctuation)
 
-channel = grpc.insecure_channel('localhost:50051')
+channel = grpc.insecure_channel('parsed_sup:50051')
 stub = CrawlerSupervisorStub(channel)
 
 
@@ -45,6 +45,6 @@ class BlogSpider(scrapy.Spider):
     words = filter(lambda x: len(x), re.split(r'\W+', text))
     stripped = [w.translate(translation_table) for w in words]
     lowercase = [word.lower() for word in stripped]
-    return lowercase
+    return list(dict.fromkeys(lowercase))
 
 
