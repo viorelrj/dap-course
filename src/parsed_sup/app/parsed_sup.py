@@ -32,7 +32,6 @@ def add_url_keyword_relation(url, keywords):
   else:
     url.keywords += keywords
   session.commit()
-  print("COMMITTED this", flush=True)
 
 class CrawlerSupervisorServicer(CrawlerSupervisorServicer):
   def submit(self, request, context):

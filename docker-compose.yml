@@ -5,21 +5,20 @@ services:
     env_file:
       - src/db_processed/db_processed.env
     ports:
-      - "3000:5432"
+      - "5432"
   parsed_sup:
     build:
       context: ./src
       dockerfile: ./parsed_sup/Dockerfile
     ports:
-      - "3001:50051"
+      - "50051"
   crawler:
     build: src/crawler
   service:
     build:
       context: ./src
       dockerfile: ./service/Dockerfile
-    ports:
-      - "3002:5000"
+    scale: 2
   gateway:
     build: src/gateway
     ports:

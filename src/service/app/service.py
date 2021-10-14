@@ -16,7 +16,7 @@ def get_urls_related_to_keywords(keywords):
 
 class HelloWorld(Resource):
   def get(self, keywords):
-    print("Viorel", flush=True)
+    print("Hello from service whatever")
     return get_urls_related_to_keywords(keywords.split())
 
 
