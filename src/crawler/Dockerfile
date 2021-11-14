@@ -1,4 +1,4 @@
-FROM python:3.8.11
+FROM python:3.8.9
 COPY ./app/ /app/
 COPY ./requirements.txt /requirements.txt
 

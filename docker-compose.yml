@@ -15,10 +15,13 @@ services:
   crawler:
     build: src/crawler
   service:
+    ports:
+      - "3004:5000"
     build:
       context: ./src
       dockerfile: ./service/Dockerfile
-    scale: 5
+  service_cache:
+    image: redis
   gateway:
     build: src/gateway
     ports:
