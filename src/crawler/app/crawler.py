@@ -2,13 +2,19 @@ import scrapy
 import grpc
 from processed_sink_pb2_grpc import ProcessedSinkStub
 from processed_sink_pb2 import SubmitRequest
+from crawler_manager_pb2_grpc import CrawlerManagerStub
+from crawler_manager_pb2 import RegisterRequest
+
 import re
 import string
 
 translation_table = str.maketrans('', '', string.punctuation)
 
-channel = grpc.insecure_channel('parsed_sup:50051')
-stub = ProcessedSinkStub(channel)
+processed_sink_channel = grpc.insecure_channel('parsed_sup:50051')
+processed_sink_stub = ProcessedSinkStub(processed_sink_channel)
+
+crawler_manager_channel = grpc.insecure_channel('crawler_manager:50051')
+crawler_manager_stub = CrawlerManagerStub(crawler_manager_channel)
 
 
 def flatten_list(list_of_lists):
@@ -21,6 +27,7 @@ class BlogSpider(scrapy.Spider):
 
   def __init__(self,*args, **kwargs):
     super(BlogSpider, self).__init__(*args, **kwargs)
+    crawler_manager_stub.register(RegisterRequest(id=''), wait_for_ready=True)
 
   def parse(self, response):
     important_sentences = list(map(lambda x: x.css('*::text').getall(), response.css('h1, h1 *, title, title *')))
@@ -28,7 +35,7 @@ class BlogSpider(scrapy.Spider):
         x), flatten_list(important_sentences)))
     keywords = flatten_list(keywords_lists)
 
-    stub.submit.future(
+    processed_sink_stub.submit.future(
       SubmitRequest(
         origin=response.url,
         links=list(filter(lambda x: len(x) > 1, set(response.css('a::attr(href)').extract()))),

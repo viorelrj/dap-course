@@ -12,18 +12,22 @@ services:
       dockerfile: ./parsed_sup/Dockerfile
     ports:
       - "50051"
+  crawler_manager:
+    build:
+      context: ./src
+      dockerfile: ./crawler_manager/Dockerfile
   crawler:
     build: src/crawler
-    restart: on-failure
+    # restart: on-failure
   service:
-    restart: on-failure
+    # restart: on-failure
     ports:
       - "3004:5000"
     build:
       context: ./src
       dockerfile: ./service/Dockerfile
   service_cache:
-    restart: on-failure
+    # restart: on-failure
     image: redis
   gateway:
     build: src/gateway

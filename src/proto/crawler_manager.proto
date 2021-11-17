@@ -1,0 +1,25 @@
+
+syntax = "proto3";
+
+service CrawlerManager {
+  rpc register(RegisterRequest) returns (RegisterResponse) {};
+  rpc pull(PullRequest) returns (PullResponse) {};
+}
+
+message RegisterRequest {
+  string id = 1;
+}
+
+message RegisterResponse {
+  string status = 1;
+  string id = 2;
+}
+
+message PullRequest {
+  string id = 1;
+}
+
+message PullResponse {
+  string status = 1;
+  string url = 2;
+}

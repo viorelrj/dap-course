@@ -1,1 +1,1 @@
-projects = ['crawler', 'parsed_sup', 'service']
+projects = ['crawler', 'parsed_sup', 'service', 'crawler_manager']
