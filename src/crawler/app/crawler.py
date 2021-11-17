@@ -3,7 +3,7 @@ import grpc
 from processed_sink_pb2_grpc import ProcessedSinkStub
 from processed_sink_pb2 import SubmitRequest
 from crawler_manager_pb2_grpc import CrawlerManagerStub
-from crawler_manager_pb2 import RegisterRequest
+from crawler_manager_pb2 import RegisterRequest, PullRequest
 
 import re
 import string
@@ -24,12 +24,17 @@ def flatten_list(list_of_lists):
 class BlogSpider(scrapy.Spider):
   name = 'blogspider'
   start_urls = ['https://www.zyte.com/blog/']
+  id = ''
 
   def __init__(self,*args, **kwargs):
     super(BlogSpider, self).__init__(*args, **kwargs)
-    crawler_manager_stub.register(RegisterRequest(id=''), wait_for_ready=True)
+    self.id = crawler_manager_stub.register(RegisterRequest(id=''), wait_for_ready=True).id
 
   def parse(self, response):
+    print(self.id, flush=True)
+    items = crawler_manager_stub.pull(PullRequest(id=self.id))
+    print(items, flush=True)
+    
     important_sentences = list(map(lambda x: x.css('*::text').getall(), response.css('h1, h1 *, title, title *')))
     keywords_lists = list(map(lambda x: self._get_words(
         x), flatten_list(important_sentences)))
