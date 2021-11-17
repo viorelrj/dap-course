@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-service CrawlerSupervisor {
+service ProcessedSink {
   rpc submit (SubmitRequest) returns (SubmitResponse) {}
 }
 

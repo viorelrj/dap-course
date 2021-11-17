@@ -1,14 +1,14 @@
 import scrapy
 import grpc
-from crawler_pb2_grpc import CrawlerSupervisorStub
-from crawler_pb2 import SubmitRequest
+from processed_sink_pb2_grpc import ProcessedSinkStub
+from processed_sink_pb2 import SubmitRequest
 import re
 import string
 
 translation_table = str.maketrans('', '', string.punctuation)
 
 channel = grpc.insecure_channel('parsed_sup:50051')
-stub = CrawlerSupervisorStub(channel)
+stub = ProcessedSinkStub(channel)
 
 
 def flatten_list(list_of_lists):
