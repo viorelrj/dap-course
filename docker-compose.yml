@@ -19,6 +19,8 @@ services:
   crawler:
     build: src/crawler
     # restart: on-failure
+  crawler_queue:
+    image: redis
   service:
     # restart: on-failure
     ports:
