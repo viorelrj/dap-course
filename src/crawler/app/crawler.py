@@ -31,10 +31,6 @@ class BlogSpider(scrapy.Spider):
     self.id = crawler_manager_stub.register(RegisterRequest(id=''), wait_for_ready=True).id
 
   def parse(self, response):
-    print(self.id, flush=True)
-    items = crawler_manager_stub.pull(PullRequest(id=self.id))
-    print(items, flush=True)
-    
     important_sentences = list(map(lambda x: x.css('*::text').getall(), response.css('h1, h1 *, title, title *')))
     keywords_lists = list(map(lambda x: self._get_words(
         x), flatten_list(important_sentences)))
@@ -48,10 +44,16 @@ class BlogSpider(scrapy.Spider):
       ),
       wait_for_ready=True
     )
-    # for title in response.css('.oxy-post-title'):
-    #   pass
-    for next_page in response.css('a[href]'):
-      yield response.follow(next_page, self.parse)
+
+
+    manager_response = crawler_manager_stub.pull(PullRequest(id=self.id))
+    while (manager_response.status == 'RETRY'):
+      print('retry', flush=True)
+      manager_response = crawler_manager_stub.pull(PullRequest(id=self.id))
+    
+    url = manager_response.url
+    print(url, flush=True)
+    yield response.follow(url, self.parse)
 
   def _get_words(self, text):
     words = filter(lambda x: len(x), re.split(r'\W+', text))
