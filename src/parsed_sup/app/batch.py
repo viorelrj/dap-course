@@ -1,8 +1,6 @@
 from db_processed import Keyword, session_factory, Url
-from queue_connector import QueueConnector
 
 session = session_factory()
-queue = QueueConnector()
 
 def process_batch(batch):
   all_urls = []
@@ -10,7 +8,6 @@ def process_batch(batch):
   for item in batch:
     all_urls.append(item.url)
     all_keywords += item.keywords
-  queue.push(all_urls)
   all_urls = _get_or_create_urls(all_urls)
   all_keywords = _get_or_create_keywords(list(set(all_keywords)))
 
@@ -22,7 +19,6 @@ def process_batch(batch):
     else:
       url.keywords += keywords
   session.commit()
-  # print("Batch processed", flush=True)
 
 def _get_or_create_urls(urls):
   url_objs = list(session.query(Url).filter(Url.url.in_(urls)).all())

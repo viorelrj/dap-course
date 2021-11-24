@@ -1,9 +1,6 @@
 from flask import Flask, make_response
 from flask_restful import Resource, Api
 from db_processed import Keyword, session_factory
-from redis import Redis
-
-r = Redis(host='service_cache', port=6379)
 
 app = Flask(__name__)
 api = Api(app)

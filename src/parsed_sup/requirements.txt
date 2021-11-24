@@ -48,5 +48,6 @@ toml==0.10.2
 Twisted==21.7.0
 typing-extensions==3.10.0.2
 w3lib==1.22.0
+walrus==0.8.2
 Werkzeug==2.0.2
 zope.interface==5.4.0

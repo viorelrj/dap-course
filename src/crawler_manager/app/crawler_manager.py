@@ -6,6 +6,9 @@ import grpc
 
 from collections import defaultdict
 from uuid import uuid4
+from queue_connector import QueueConnector
+queue = QueueConnector()
+
 class CrawlerManagerServicer(CrawlerManagerServicer):
   crawlers = defaultdict(lambda: None)
 
@@ -16,6 +19,7 @@ class CrawlerManagerServicer(CrawlerManagerServicer):
     return RegisterResponse(status='OK', id=new_id)
 
   def pull(self, request, context):
+    print(queue.get_first(1), flush=True)
     id = request.id
     if self.crawlers[id] is None: return PullResponse(status='NOREG')
     # if self.crawlers[id].qsize() < 3:
@@ -26,6 +30,7 @@ class CrawlerManagerServicer(CrawlerManagerServicer):
 
 
 def serve():
+  print(queue.get_first(1), flush=True)
   server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
   add_CrawlerManagerServicer_to_server(CrawlerManagerServicer(), server)
   server.add_insecure_port('[::]:50051')

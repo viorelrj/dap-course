@@ -10,17 +10,23 @@ services:
     build:
       context: ./src
       dockerfile: ./parsed_sup/Dockerfile
+    depends_on:
+      - crawler_queue
     ports:
       - "50051"
   crawler_manager:
     build:
       context: ./src
       dockerfile: ./crawler_manager/Dockerfile
+    depends_on:
+      - crawler_queue
   crawler:
     build: src/crawler
     # restart: on-failure
   crawler_queue:
-    image: redis
+    image: 'redis'
+    ports:
+      - "6379"
   service:
     # restart: on-failure
     ports:

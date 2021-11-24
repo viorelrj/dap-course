@@ -36,23 +36,24 @@ class BlogSpider(scrapy.Spider):
         x), flatten_list(important_sentences)))
     keywords = flatten_list(keywords_lists)
 
-    processed_sink_stub.submit.future(
+    links = list(filter(lambda x: len(x) > 1, set(
+        response.css('a::attr(href)').extract())))
+    links = [response.urljoin(link) for link in links]
+    print(links, flush=True)
+
+    processed_sink_stub.submit(
       SubmitRequest(
         origin=response.url,
-        links=list(filter(lambda x: len(x) > 1, set(response.css('a::attr(href)').extract()))),
+        links=links,
         keywords=keywords
-      ),
-      wait_for_ready=True
+      )
     )
-
 
     manager_response = crawler_manager_stub.pull(PullRequest(id=self.id))
     while (manager_response.status == 'RETRY'):
-      print('retry', flush=True)
       manager_response = crawler_manager_stub.pull(PullRequest(id=self.id))
     
     url = manager_response.url
-    print(url, flush=True)
     yield response.follow(url, self.parse)
 
   def _get_words(self, text):

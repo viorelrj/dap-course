@@ -8,18 +8,34 @@ from rx.subject import Subject
 from rx.operators import buffer_with_time_or_count
 from batch import process_batch
 from parsed_response import ParsedResponse
+from queue_connector import QueueConnector
 
 
+queue = QueueConnector()
 batch = Queue()
-dispatcher = Subject()
+db_dispatcher = Subject()
+queue_dispatcher = Subject()
 
-dispatcher.pipe(
+db_dispatcher.pipe(
   buffer_with_time_or_count(timespan=5.0, count=50)
 ).subscribe(lambda x: process_batch(x))
 
+queue_dispatcher.pipe(
+  buffer_with_time_or_count(timespan=5.0, count=50)
+).subscribe(lambda x: process_queue_batch(x))
+
+def process_queue_batch(batch):
+  links = list(set(flatten_list(batch)))
+  queue.push(links)
+  
+def flatten_list(list_of_lists):
+  return [item for sublist in list_of_lists for item in sublist]
+
 class ProcessedSinkServicer(ProcessedSinkServicer):
   def submit(self, request, context):
-    dispatcher.on_next(ParsedResponse(request.origin, list(set(request.keywords))))
+    print(request.links, flush=True)
+    db_dispatcher.on_next(ParsedResponse(request.origin, list(set(request.keywords))))
+    queue_dispatcher.on_next(list(request.links))
     return SubmitResponse()
 
 def serve():
