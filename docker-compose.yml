@@ -22,7 +22,7 @@ services:
       - crawler_queue
   crawler:
     build: src/crawler
-    # restart: on-failure
+    restart: always
   crawler_queue:
     image: 'redis'
     ports:
