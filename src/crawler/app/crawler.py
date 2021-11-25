@@ -4,6 +4,7 @@ from processed_sink_pb2_grpc import ProcessedSinkStub
 from processed_sink_pb2 import SubmitRequest
 from crawler_manager_pb2_grpc import CrawlerManagerStub
 from crawler_manager_pb2 import RegisterRequest, PullRequest
+from time import sleep
 
 import re
 import string
@@ -21,10 +22,32 @@ def flatten_list(list_of_lists):
   return [item for sublist in list_of_lists for item in sublist]
 
 
+class CircuitBreaker:
+  def reset(self):
+    self.tries = 0
+
+  def __init__(self, max_tries, sleep_time):
+    self.max_tries = max_tries
+    self.sleep_time = sleep_time
+    self.reset()
+
+  def can_try(self):
+    return self.tries < self.max_tries
+
+  def time_till_next(self):
+    time = self.sleep_time * self.tries * 2**self.tries
+    self.tries += 1
+    return time
+
+
 class BlogSpider(scrapy.Spider):
   name = 'blogspider'
+  custom_settings = {
+    'DUPEFILTER_CLASS': 'scrapy.dupefilters.BaseDupeFilter',
+  }
   start_urls = ['https://www.zyte.com/blog/']
   id = ''
+
 
   def __init__(self,*args, **kwargs):
     super(BlogSpider, self).__init__(*args, **kwargs)
@@ -39,7 +62,6 @@ class BlogSpider(scrapy.Spider):
     links = list(filter(lambda x: len(x) > 1, set(
         response.css('a::attr(href)').extract())))
     links = [response.urljoin(link) for link in links]
-    print(links, flush=True)
 
     processed_sink_stub.submit(
       SubmitRequest(
@@ -49,11 +71,13 @@ class BlogSpider(scrapy.Spider):
       )
     )
 
+    cb = CircuitBreaker(5, 1)
     manager_response = crawler_manager_stub.pull(PullRequest(id=self.id))
-    while (manager_response.status == 'RETRY'):
+    while (manager_response.status == 'RETRY' and cb.can_try()):
+      sleep(cb.time_till_next())
       manager_response = crawler_manager_stub.pull(PullRequest(id=self.id))
-    
     url = manager_response.url
+    print(url, flush=True)
     yield response.follow(url, self.parse)
 
   def _get_words(self, text):

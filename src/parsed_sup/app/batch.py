@@ -1,14 +1,16 @@
 from db_processed import Keyword, session_factory, Url
 
-session = session_factory()
+session = None
 
 def process_batch(batch):
+  global session 
+  session = session_factory()
   all_urls = []
   all_keywords = []
   for item in batch:
     all_urls.append(item.url)
     all_keywords += item.keywords
-  all_urls = _get_or_create_urls(all_urls)
+  all_urls = _get_or_create_urls(list(set(all_urls)))
   all_keywords = _get_or_create_keywords(list(set(all_keywords)))
 
   for item in batch:
@@ -19,10 +21,12 @@ def process_batch(batch):
     else:
       url.keywords += keywords
   session.commit()
+  session.close()
 
 def _get_or_create_urls(urls):
   url_objs = list(session.query(Url).filter(Url.url.in_(urls)).all())
-  urls_to_create = [url for url in urls if url not in list(map(lambda x: x.url, url_objs))]
+  existing_urls = list(map(lambda x: x.url, url_objs))
+  urls_to_create = [url for url in urls if url not in existing_urls]
   new_urls = [Url(url=url) for url in urls_to_create]
   session.add_all(new_urls)
   return url_objs + new_urls

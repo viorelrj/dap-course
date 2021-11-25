@@ -4,7 +4,7 @@ class QueueConnector:
   redis = Redis(host='crawler_queue', port=6379, db=0)
 
   def get_first(self, n):
-    return self.redis.lrange('queue_to_process', 0, n)
+    return self.redis.lrange('queue_to_process', 0, n - 1)
 
   def push(self, items):
     if not len(items): return
@@ -12,8 +12,9 @@ class QueueConnector:
 
   def pop(self, n):
     pipe = self.redis.pipeline()
-    items = pipe.lrange('queue_to_process', 0, n)
-    pipe.ltrim('queue_to_process', 0, n)
-    pipe.execute()
+    pipe.lrange('queue_to_process', 0, n - 1)
+    pipe.ltrim('queue_to_process', n, -1)
+    res = pipe.execute()
+    print(res, flush=True)
     pipe.reset()
-    return items
+    return res[0]

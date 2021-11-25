@@ -9,6 +9,7 @@ from rx.operators import buffer_with_time_or_count
 from batch import process_batch
 from parsed_response import ParsedResponse
 from queue_connector import QueueConnector
+from db_processed import session_factory, Url
 
 
 queue = QueueConnector()
@@ -25,15 +26,20 @@ queue_dispatcher.pipe(
 ).subscribe(lambda x: process_queue_batch(x))
 
 def process_queue_batch(batch):
+  session = session_factory()
   links = list(set(flatten_list(batch)))
+  dupe_links = list(session.query(Url).filter(Url.url.in_(links)).all())
+  dupe_links = [link.url for link in dupe_links]
+  links = [link for link in links if link not in dupe_links]
+  print(links, flush=True)
   queue.push(links)
+  session.close()
   
 def flatten_list(list_of_lists):
   return [item for sublist in list_of_lists for item in sublist]
 
 class ProcessedSinkServicer(ProcessedSinkServicer):
   def submit(self, request, context):
-    print(request.links, flush=True)
     db_dispatcher.on_next(ParsedResponse(request.origin, list(set(request.keywords))))
     queue_dispatcher.on_next(list(request.links))
     return SubmitResponse()

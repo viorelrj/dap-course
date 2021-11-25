@@ -15,22 +15,18 @@ class CrawlerManagerServicer(CrawlerManagerServicer):
   def register(self, request, context):
     new_id = str(uuid4())
     self.crawlers[new_id] = Queue()
-    self.crawlers[new_id].put('http://www.google.com')
     return RegisterResponse(status='OK', id=new_id)
 
   def pull(self, request, context):
-    print(queue.get_first(1), flush=True)
     id = request.id
     if self.crawlers[id] is None: return PullResponse(status='NOREG')
-    # if self.crawlers[id].qsize() < 3:
-      # pull from redis
-    if self.crawlers[id].qsize() < 1:
-      return PullResponse(status='RETRY')
+    if self.crawlers[id].qsize() < 3:
+      [self.crawlers[id].put(link.decode('utf-8')) for link in queue.pop(10)]
+    if self.crawlers[id].qsize() < 1: return PullResponse(status='RETRY')
     return PullResponse(status='OK', url=self.crawlers[id].get())
 
 
 def serve():
-  print(queue.get_first(1), flush=True)
   server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
   add_CrawlerManagerServicer_to_server(CrawlerManagerServicer(), server)
   server.add_insecure_port('[::]:50051')
