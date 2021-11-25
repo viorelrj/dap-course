@@ -1,9 +1,11 @@
 from flask import Flask, make_response
 from flask_restful import Resource, Api
 from db_processed import Keyword, session_factory
+from redis import Redis
 
 app = Flask(__name__)
 api = Api(app)
+redis = Redis(host='service_cache', port=6379, db=0)
 
 def flatten_list(l):
   return [item for sublist in l for item in sublist]
@@ -12,11 +14,10 @@ def flatten_list(l):
 def get_cache_key(keywords):
   return keywords.lower().replace(' ', '_')
 
-
 class LinksByKeywords(Resource):
   def get(self, keywords):
     cache_key = get_cache_key(keywords)
-    cache_response = r.lrange(cache_key, 0, -1)
+    cache_response = redis.get(cache_key)
     if cache_response:
       print('Sending from cache', flush=True)
       items = [x.decode('utf-8') if x else None for x in cache_response]
@@ -27,8 +28,7 @@ class LinksByKeywords(Resource):
         Keyword).filter(Keyword.keyword.in_(keywords.split()))])
     session.close()
     url_strings = [u.url for u in urls]
-    r.lpush(cache_key, *url_strings if url_strings else [''])
-
+    redis.set(cache_key, [url.encode() for url in url_strings] if url_strings else bytes(['']))
 
     return url_strings, 200, {'X-Cache': 'MISS'}
 
