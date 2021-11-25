@@ -2,6 +2,7 @@ from flask import Flask, make_response
 from flask_restful import Resource, Api
 from db_processed import Keyword, session_factory
 from redis import Redis
+import json
 
 app = Flask(__name__)
 api = Api(app)
@@ -19,8 +20,7 @@ class LinksByKeywords(Resource):
     cache_key = get_cache_key(keywords)
     cache_response = redis.get(cache_key)
     if cache_response:
-      print('Sending from cache', flush=True)
-      items = [x.decode('utf-8') if x else None for x in cache_response]
+      items = json.loads(cache_response.decode())
       return list(filter(lambda x: x is not None, items)), 200, {'X-Cache': 'HIT'}
 
     session = session_factory()
@@ -28,7 +28,7 @@ class LinksByKeywords(Resource):
         Keyword).filter(Keyword.keyword.in_(keywords.split()))])
     session.close()
     url_strings = [u.url for u in urls]
-    redis.set(cache_key, [url.encode() for url in url_strings] if url_strings else bytes(['']))
+    redis.set(cache_key, json.dumps(url_strings).encode() if url_strings else '[]'.encode())
 
     return url_strings, 200, {'X-Cache': 'MISS'}
 
