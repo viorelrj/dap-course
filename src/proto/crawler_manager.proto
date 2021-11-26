@@ -4,6 +4,7 @@ syntax = "proto3";
 service CrawlerManager {
   rpc register(RegisterRequest) returns (RegisterResponse) {};
   rpc pull(PullRequest) returns (PullResponse) {};
+  rpc kill(KillRequest) returns (KillResponse) {};
 }
 
 message RegisterRequest {
@@ -22,4 +23,12 @@ message PullRequest {
 message PullResponse {
   string status = 1;
   string url = 2;
+}
+
+message KillRequest {
+  string id = 1;
+}
+
+message KillResponse {
+  string status = 1;
 }

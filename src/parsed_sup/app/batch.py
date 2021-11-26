@@ -39,7 +39,6 @@ def process_queue_batch(links):
   dupe_links = list(session.query(Url).filter(Url.url.in_(links)).all())
   dupe_links = [link.url for link in dupe_links]
   links = [link for link in links if link not in dupe_links]
-  print(links, flush=True)
   process_queue.push(links)
 
 

@@ -23,7 +23,7 @@ services:
   crawler:
     build: src/crawler
     restart: always
-    scale: 5
+    scale: 10
   crawler_queue:
     image: 'redis'
     ports:

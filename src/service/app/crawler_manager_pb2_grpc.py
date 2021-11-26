@@ -24,6 +24,11 @@ class CrawlerManagerStub(object):
                 request_serializer=crawler__manager__pb2.PullRequest.SerializeToString,
                 response_deserializer=crawler__manager__pb2.PullResponse.FromString,
                 )
+        self.kill = channel.unary_unary(
+                '/CrawlerManager/kill',
+                request_serializer=crawler__manager__pb2.KillRequest.SerializeToString,
+                response_deserializer=crawler__manager__pb2.KillResponse.FromString,
+                )
 
 
 class CrawlerManagerServicer(object):
@@ -41,6 +46,12 @@ class CrawlerManagerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def kill(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_CrawlerManagerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -53,6 +64,11 @@ def add_CrawlerManagerServicer_to_server(servicer, server):
                     servicer.pull,
                     request_deserializer=crawler__manager__pb2.PullRequest.FromString,
                     response_serializer=crawler__manager__pb2.PullResponse.SerializeToString,
+            ),
+            'kill': grpc.unary_unary_rpc_method_handler(
+                    servicer.kill,
+                    request_deserializer=crawler__manager__pb2.KillRequest.FromString,
+                    response_serializer=crawler__manager__pb2.KillResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -95,5 +111,22 @@ class CrawlerManager(object):
         return grpc.experimental.unary_unary(request, target, '/CrawlerManager/pull',
             crawler__manager__pb2.PullRequest.SerializeToString,
             crawler__manager__pb2.PullResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def kill(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/CrawlerManager/kill',
+            crawler__manager__pb2.KillRequest.SerializeToString,
+            crawler__manager__pb2.KillResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

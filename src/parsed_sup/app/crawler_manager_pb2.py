@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x15\x63rawler_manager.proto\"\x1d\n\x0fRegisterRequest\x12\n\n\x02id\x18\x01 \x01(\t\".\n\x10RegisterResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\"\x19\n\x0bPullRequest\x12\n\n\x02id\x18\x01 \x01(\t\"+\n\x0cPullResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x0b\n\x03url\x18\x02 \x01(\t2j\n\x0e\x43rawlerManager\x12\x31\n\x08register\x12\x10.RegisterRequest\x1a\x11.RegisterResponse\"\x00\x12%\n\x04pull\x12\x0c.PullRequest\x1a\r.PullResponse\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x15\x63rawler_manager.proto\"\x1d\n\x0fRegisterRequest\x12\n\n\x02id\x18\x01 \x01(\t\".\n\x10RegisterResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\"\x19\n\x0bPullRequest\x12\n\n\x02id\x18\x01 \x01(\t\"+\n\x0cPullResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x0b\n\x03url\x18\x02 \x01(\t\"\x19\n\x0bKillRequest\x12\n\n\x02id\x18\x01 \x01(\t\"\x1e\n\x0cKillResponse\x12\x0e\n\x06status\x18\x01 \x01(\t2\x91\x01\n\x0e\x43rawlerManager\x12\x31\n\x08register\x12\x10.RegisterRequest\x1a\x11.RegisterResponse\"\x00\x12%\n\x04pull\x12\x0c.PullRequest\x1a\r.PullResponse\"\x00\x12%\n\x04kill\x12\x0c.KillRequest\x1a\r.KillResponse\"\x00\x62\x06proto3'
 )
 
 
@@ -166,10 +166,76 @@ _PULLRESPONSE = _descriptor.Descriptor(
   serialized_end=174,
 )
 
+
+_KILLREQUEST = _descriptor.Descriptor(
+  name='KillRequest',
+  full_name='KillRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='id', full_name='KillRequest.id', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=176,
+  serialized_end=201,
+)
+
+
+_KILLRESPONSE = _descriptor.Descriptor(
+  name='KillResponse',
+  full_name='KillResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='KillResponse.status', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=203,
+  serialized_end=233,
+)
+
 DESCRIPTOR.message_types_by_name['RegisterRequest'] = _REGISTERREQUEST
 DESCRIPTOR.message_types_by_name['RegisterResponse'] = _REGISTERRESPONSE
 DESCRIPTOR.message_types_by_name['PullRequest'] = _PULLREQUEST
 DESCRIPTOR.message_types_by_name['PullResponse'] = _PULLRESPONSE
+DESCRIPTOR.message_types_by_name['KillRequest'] = _KILLREQUEST
+DESCRIPTOR.message_types_by_name['KillResponse'] = _KILLRESPONSE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 RegisterRequest = _reflection.GeneratedProtocolMessageType('RegisterRequest', (_message.Message,), {
@@ -200,6 +266,20 @@ PullResponse = _reflection.GeneratedProtocolMessageType('PullResponse', (_messag
   })
 _sym_db.RegisterMessage(PullResponse)
 
+KillRequest = _reflection.GeneratedProtocolMessageType('KillRequest', (_message.Message,), {
+  'DESCRIPTOR' : _KILLREQUEST,
+  '__module__' : 'crawler_manager_pb2'
+  # @@protoc_insertion_point(class_scope:KillRequest)
+  })
+_sym_db.RegisterMessage(KillRequest)
+
+KillResponse = _reflection.GeneratedProtocolMessageType('KillResponse', (_message.Message,), {
+  'DESCRIPTOR' : _KILLRESPONSE,
+  '__module__' : 'crawler_manager_pb2'
+  # @@protoc_insertion_point(class_scope:KillResponse)
+  })
+_sym_db.RegisterMessage(KillResponse)
+
 
 
 _CRAWLERMANAGER = _descriptor.ServiceDescriptor(
@@ -209,8 +289,8 @@ _CRAWLERMANAGER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=176,
-  serialized_end=282,
+  serialized_start=236,
+  serialized_end=381,
   methods=[
   _descriptor.MethodDescriptor(
     name='register',
@@ -229,6 +309,16 @@ _CRAWLERMANAGER = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_PULLREQUEST,
     output_type=_PULLRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='kill',
+    full_name='CrawlerManager.kill',
+    index=2,
+    containing_service=None,
+    input_type=_KILLREQUEST,
+    output_type=_KILLRESPONSE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),

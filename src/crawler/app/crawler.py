@@ -1,5 +1,6 @@
 import scrapy
 import grpc
+from crawler_manager_pb2 import KillRequest
 from processed_sink_pb2_grpc import ProcessedSinkStub
 from processed_sink_pb2 import SubmitRequest
 from crawler_manager_pb2_grpc import CrawlerManagerStub
@@ -48,6 +49,13 @@ class BlogSpider(scrapy.Spider):
   start_urls = ['https://www.zyte.com/blog/']
   id = ''
 
+  def get_next_page(self):
+    cb = CircuitBreaker(5, 1)
+    manager_response = crawler_manager_stub.pull(PullRequest(id=self.id))
+    while (manager_response.status == 'RETRY' and cb.can_try()):
+      sleep(cb.time_till_next())
+      manager_response = crawler_manager_stub.pull(PullRequest(id=self.id))
+    return manager_response.url
 
   def __init__(self,*args, **kwargs):
     super(BlogSpider, self).__init__(*args, **kwargs)
@@ -70,15 +78,15 @@ class BlogSpider(scrapy.Spider):
         keywords=keywords
       )
     )
+    print(response.url, flush=True)
+    yield response.follow(self.get_next_page(), self.parse, errback=lambda x: self.handle_exception(x, response))
 
-    cb = CircuitBreaker(5, 1)
-    manager_response = crawler_manager_stub.pull(PullRequest(id=self.id))
-    while (manager_response.status == 'RETRY' and cb.can_try()):
-      sleep(cb.time_till_next())
-      manager_response = crawler_manager_stub.pull(PullRequest(id=self.id))
-    url = manager_response.url
-    print(url, flush=True)
-    yield response.follow(url, self.parse)
+  def handle_exception(self, err, response):
+    response.follow(self.get_next_page(), self.parse, errback=lambda x: self.handle_exception(x, response))
+
+  def closed(self, reason):
+    crawler_manager_stub.kill(KillRequest(id=self.id))
+
 
   def _get_words(self, text):
     words = filter(lambda x: len(x), re.split(r'\W+', text))
