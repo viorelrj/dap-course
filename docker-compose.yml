@@ -1,58 +1,83 @@
 version: "3.9"
 services:
   processed_db:
-    image: postgres:latest
-    env_file:
-      - src/db_processed/db_processed.env
-    volumes:
-      - ./src/db_processed/init-master.sh:/docker-entrypoint-initdb.d/init.sh
-      - ./src/db_processed:/tmp/postgresql
+    image: docker.io/bitnami/postgresql:latest
     ports:
-      - "5432:5432"
-  processed_db_copy:
-    image: postgres:latest
-    volumes:
-      - ./src/db_processed/init-slave.sh:/docker-entrypoint-initdb.d/init.sh
-      - ./src/db_processed:/tmp/postgresql
-    env_file:
-      - src/db_processed/db_processed.env
+      - '5432:5432'
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=repl_password
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=admin
+      - POSTGRESQL_DATABASE=processed
+      - ALLOW_EMPTY_PASSWORD=yes
+  processed_db_copy-1:
+    image: docker.io/bitnami/postgresql:latest
     ports:
-      - "5433:5432"
-    links:
+      - '5433:5432'
+    depends_on:
       - processed_db
-  # parsed_sup:
-  #   build: 
-  #     context: ./src
-  #     dockerfile: ./parsed_sup/Dockerfile
-  #   depends_on:
-  #     - crawler_queue
-  #   ports:
-  #     - "50051"
-  # crawler_manager:
-  #   build:
-  #     context: ./src
-  #     dockerfile: ./crawler_manager/Dockerfile
-  #   depends_on:
-  #     - crawler_queue
-  # crawler:
-  #   build: src/crawler
-  #   restart: always
-  #   scale: 10
-  # crawler_queue:
-  #   image: 'redis'
-  #   ports:
-  #     - "6379"
-  # service:
-  #   # restart: on-failure
-  #   ports:
-  #     - "3004:5000"
-  #   build:
-  #     context: ./src
-  #     dockerfile: ./service/Dockerfile
-  # service_cache:
-  #   # restart: on-failure
-  #   image: redis
-  # gateway:
-  #   build: src/gateway
-  #   ports:
-  #     - "3003:80"
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=repl_password
+      - POSTGRESQL_MASTER_HOST=processed_db
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=admin
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - ALLOW_EMPTY_PASSWORD=yes
+  processed_db_copy-2:
+    image: docker.io/bitnami/postgresql:latest
+    ports:
+      - '5434:5432'
+    depends_on:
+      - processed_db
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=repl_password
+      - POSTGRESQL_MASTER_HOST=processed_db
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=admin
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - ALLOW_EMPTY_PASSWORD=yes
+  parsed_sup:
+    build: 
+      context: ./src
+      dockerfile: ./parsed_sup/Dockerfile
+    depends_on:
+      - crawler_queue
+      - processed_db
+    ports:
+      - "50051"
+  crawler_manager:
+    build:
+      context: ./src
+      dockerfile: ./crawler_manager/Dockerfile
+    depends_on:
+      - crawler_queue
+  crawler:
+    build: src/crawler
+    restart: always
+    scale: 10
+  crawler_queue:
+    image: 'redis'
+    ports:
+      - "6379"
+  service:
+    # restart: on-failure
+    depends_on:
+      - processed_db
+    ports:
+      - "3004:5000"
+    build:
+      context: ./src
+      dockerfile: ./service/Dockerfile
+  service_cache:
+    # restart: on-failure
+    image: redis
+  gateway:
+    build: src/gateway
+    ports:
+      - "3003:80"
