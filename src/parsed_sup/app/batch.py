@@ -9,6 +9,7 @@ def flatten_list(list_of_lists):
   return [item for sublist in list_of_lists for item in sublist]
 
 def process_batch(batch):
+  # TODO: Use Upsert
   global session 
   session = session_factory()
   all_urls = []
