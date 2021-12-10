@@ -1,7 +1,40 @@
 version: "3.9"
 services:
+  kibana:
+    image: kibana:7.14.2
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:7.16.0
+    volumes:
+      - ./src/metricbeat/metricbeat.docker.yml:/usr/share/metricbeat/metricbeat.yml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /proc:/hostfs/proc:ro
+      - /:/hostfs:ro
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - setup.kibana.host=kibana:5601
+    ports:
+      - "5044:5044"
+    depends_on:
+      - elasticsearch
+      - kibana
+  elasticsearch:
+    image: elasticsearch:7.14.2
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"
   processed_db:
     image: docker.io/bitnami/postgresql:latest
+    depends_on:
+      - elasticsearch
     ports:
       - '5432:5432'
     environment:
@@ -12,6 +45,7 @@ services:
       - POSTGRESQL_PASSWORD=admin
       - POSTGRESQL_DATABASE=processed
       - ALLOW_EMPTY_PASSWORD=yes
+      - FORCE_SSL=TRUE
   processed_db_copy-1:
     image: docker.io/bitnami/postgresql:latest
     ports:
