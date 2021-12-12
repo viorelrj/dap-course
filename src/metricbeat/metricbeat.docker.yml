@@ -9,6 +9,19 @@ metricbeat.config:
 #     - type: docker
 #       hints.enabled: true
 
+# metricbeat.autodiscover:
+#   providers:
+#     - type: docker
+#       labels.dedot: true
+#       templates:
+#         - condition:
+#             contains:
+#               docker.container.name: elasticsearch # make sure that you use the correct name of the container
+#           config:
+#             - module: elasticsearch
+#               metricsets: ["node", "node_stats"]
+#               hosts: "elasticsearch:9200"
+
 # metricbeat.modules:
 
 
@@ -28,7 +41,10 @@ metricbeat.config:
 #   enabled: true
 
 processors:
-  - add_cloud_metadata: ~
+   - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+      match_source: true
+      match_short_id: true
 
 output.elasticsearch:
   hosts: '${ELASTICSEARCH_HOSTS:elasticsearch:9200}'
@@ -50,6 +66,9 @@ metricbeat.modules:
 
     # Stats about every PostgreSQL process
     - activity
-  hosts: ["postgres://processed_db:5432?sslmode=disable"] 
+  hosts: 
+    - postgres://processed_db:5432?sslmode=disable 
+    - postgres://processed_db_copy-1:5432?sslmode=disable 
+    - postgres://processed_db_copy-2:5432?sslmode=disable 
   username: postgres
   password: admin

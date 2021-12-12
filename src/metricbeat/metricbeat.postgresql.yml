@@ -1,0 +1,10 @@
+- module: postgresql
+  metricsets:
+   - database
+   - bgwriter
+   - activity
+  period: 10s
+  hosts: 
+    - postgres://postgres:admin@processed_db:5432/processed?sslmode=disable
+  username: postgres
+  password: admin

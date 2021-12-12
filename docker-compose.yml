@@ -9,12 +9,15 @@ services:
     depends_on:
       - elasticsearch
   metricbeat:
-    image: docker.elastic.co/beats/metricbeat:7.16.0
+    build: ./src/metricbeat
+    # image: docker.elastic.co/beats/metricbeat:7.16.0
+    user: root
     volumes:
-      - ./src/metricbeat/metricbeat.docker.yml:/usr/share/metricbeat/metricbeat.yml
+      # - ./src/metricbeat/metricbeat.docker.yml:/usr/share/metricbeat/metricbeat.yml
+      - ./src/metricbeat/metricbeat.postgresql.yml:/usr/share/metricbeat/modules.d/postgresql.yml
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
-      - /proc:/hostfs/proc:ro
+      # - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      # - /proc:/hostfs/proc:ro
       - /:/hostfs:ro
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
@@ -24,6 +27,19 @@ services:
     depends_on:
       - elasticsearch
       - kibana
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.16.0
+    restart: on-failure
+    # build: ./src/filebeat
+    user: root
+    environment:
+      - output.elasticsearch.hosts=["elasticsearch:9200"]
+      - setup.kibana.host=kibana:5601
+    volumes:
+      - ./src/filebeat/filebeat.docker.yml:/usr/share/filebeat/filebeat.yml:ro
+      # - ./src/filebeat/filebeat.postgresql.yml:/usr/share/filebeat/modules.d/postgresql.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
   elasticsearch:
     image: elasticsearch:7.14.2
     environment:
@@ -32,12 +48,16 @@ services:
       - "9200:9200"
       - "9300:9300"
   processed_db:
-    image: docker.io/bitnami/postgresql:latest
-    depends_on:
-      - elasticsearch
+    image: docker.io/bitnami/postgresql
     ports:
       - '5432:5432'
+    labels:
+      - co.elastic.logs/module:postgresql
+      # - co.elastic.logs/fileset.stdout:access
+      # - co.elastic.logs/fileset.stderr:error
+
     environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
       - POSTGRESQL_REPLICATION_MODE=master
       - POSTGRESQL_REPLICATION_USER=repl_user
       - POSTGRESQL_REPLICATION_PASSWORD=repl_password
@@ -45,14 +65,15 @@ services:
       - POSTGRESQL_PASSWORD=admin
       - POSTGRESQL_DATABASE=processed
       - ALLOW_EMPTY_PASSWORD=yes
-      - FORCE_SSL=TRUE
+      - POSTGRESQL_PGAUDIT_LOG=all
   processed_db_copy-1:
-    image: docker.io/bitnami/postgresql:latest
+    image: docker.io/bitnami/postgresql
     ports:
       - '5433:5432'
     depends_on:
       - processed_db
     environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
       - POSTGRESQL_REPLICATION_MODE=slave
       - POSTGRESQL_REPLICATION_USER=repl_user
       - POSTGRESQL_REPLICATION_PASSWORD=repl_password
@@ -67,6 +88,7 @@ services:
       - '5434:5432'
     depends_on:
       - processed_db
+      - elasticsearch
     environment:
       - POSTGRESQL_REPLICATION_MODE=slave
       - POSTGRESQL_REPLICATION_USER=repl_user
@@ -77,11 +99,12 @@ services:
       - POSTGRESQL_MASTER_PORT_NUMBER=5432
       - ALLOW_EMPTY_PASSWORD=yes
   parsed_sup:
+    restart: on-failure
     build: 
       context: ./src
       dockerfile: ./parsed_sup/Dockerfile
     depends_on:
-      - crawler_queue
+      # - crawler_queue
       - processed_db
     ports:
       - "50051"
@@ -94,9 +117,11 @@ services:
   crawler:
     build: src/crawler
     restart: always
-    scale: 10
+    scale: 3
   crawler_queue:
     image: 'redis'
+    labels:
+      - co.elastic.logs/module:postgresql
     ports:
       - "6379"
   service:

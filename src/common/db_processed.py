@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 engine = create_engine(
-  'postgresql://postgres:admin@processed_db:5432/processed', echo=False, pool_size=50).connect()
+    'postgresql://postgres:admin@processed_db:5432/processed', echo=False, pool_size=50).connect()
 _SessionFactory = sessionmaker(bind=engine, autoflush=True)
 Base = declarative_base()
 
