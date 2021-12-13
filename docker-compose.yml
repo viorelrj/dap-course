@@ -57,57 +57,79 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
-  processed_db:
-    image: docker.io/bitnami/postgresql
+  processed-db-0:
+    image: bitnami/postgresql-repmgr:11
     ports:
-      - '5432:5432'
+      - "5434:5432"
     labels:
       - co.elastic.logs/module:postgresql
-      # - co.elastic.logs/fileset.stdout:access
-      # - co.elastic.logs/fileset.stderr:error
-
     environment:
-      - POSTGRES_HOST_AUTH_METHOD=trust
-      - POSTGRESQL_REPLICATION_MODE=master
-      - POSTGRESQL_REPLICATION_USER=repl_user
-      - POSTGRESQL_REPLICATION_PASSWORD=repl_password
+      - POSTGRESQL_POSTGRES_PASSWORD=admin
       - POSTGRESQL_USERNAME=postgres
       - POSTGRESQL_PASSWORD=admin
       - POSTGRESQL_DATABASE=processed
-      - ALLOW_EMPTY_PASSWORD=yes
-      - POSTGRESQL_PGAUDIT_LOG=all
-  processed_db_copy-1:
-    image: docker.io/bitnami/postgresql
+      - REPMGR_PASSWORD=repmgrpassword
+      - REPMGR_PRIMARY_HOST=processed-db-0
+      - REPMGR_PARTNER_NODES=processed-db-0,processed-db-1
+      - REPMGR_NODE_NAME=processed-db-0
+      - REPMGR_NODE_NETWORK_NAME=processed-db-0
+
+  processed-db-1:
+    image: bitnami/postgresql-repmgr:11
     ports:
-      - '5433:5432'
-    depends_on:
-      - processed_db
+      - "5433:5432"
+    labels:
+      - co.elastic.logs/module:postgresql
     environment:
-      - POSTGRES_HOST_AUTH_METHOD=trust
-      - POSTGRESQL_REPLICATION_MODE=slave
-      - POSTGRESQL_REPLICATION_USER=repl_user
-      - POSTGRESQL_REPLICATION_PASSWORD=repl_password
-      - POSTGRESQL_MASTER_HOST=processed_db
+      - POSTGRESQL_POSTGRES_PASSWORD=admin
       - POSTGRESQL_USERNAME=postgres
       - POSTGRESQL_PASSWORD=admin
-      - POSTGRESQL_MASTER_PORT_NUMBER=5432
-      - ALLOW_EMPTY_PASSWORD=yes
-  processed_db_copy-2:
-    image: docker.io/bitnami/postgresql:latest
+      - POSTGRESQL_DATABASE=processed
+      - REPMGR_PASSWORD=repmgrpassword
+      - REPMGR_PRIMARY_HOST=processed-db-0
+      - REPMGR_PARTNER_NODES=processed-db-0,processed-db-1
+      - REPMGR_NODE_NAME=processed-db-1
+      - REPMGR_NODE_NETWORK_NAME=processed-db-1
+
+  processed_db:
+    image: bitnami/pgpool:4
     ports:
-      - '5434:5432'
-    depends_on:
-      - processed_db
-      - elasticsearch
+      - 5432:5432
     environment:
-      - POSTGRESQL_REPLICATION_MODE=slave
-      - POSTGRESQL_REPLICATION_USER=repl_user
-      - POSTGRESQL_REPLICATION_PASSWORD=repl_password
-      - POSTGRESQL_MASTER_HOST=processed_db
-      - POSTGRESQL_USERNAME=postgres
-      - POSTGRESQL_PASSWORD=admin
-      - POSTGRESQL_MASTER_PORT_NUMBER=5432
-      - ALLOW_EMPTY_PASSWORD=yes
+      - PGPOOL_BACKEND_NODES=0:processed-db-0:5432,1:processed-db-1:5432
+      - PGPOOL_SR_CHECK_USER=postgres
+      - PGPOOL_SR_CHECK_PASSWORD=admin
+      - PGPOOL_ENABLE_LDAP=no
+      - PGPOOL_POSTGRES_USERNAME=postgres
+      - PGPOOL_POSTGRES_PASSWORD=admin
+      - PGPOOL_ADMIN_USERNAME=admin
+      - PGPOOL_ADMIN_PASSWORD=admin
+    healthcheck:
+      test: ["CMD", "/opt/bitnami/scripts/pgpool/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    
+  # processed_db:
+  #   image: docker.io/bitnami/postgresql
+  #   ports:
+  #     - '5432:5432'
+  #   labels:
+  #     - co.elastic.logs/module:postgresql
+  #     # - co.elastic.logs/fileset.stdout:access
+  #     # - co.elastic.logs/fileset.stderr:error
+
+  #   environment:
+  #     - POSTGRES_HOST_AUTH_METHOD=trust
+  #     - POSTGRESQL_REPLICATION_MODE=master
+  #     - POSTGRESQL_REPLICATION_USER=repl_user
+  #     - POSTGRESQL_REPLICATION_PASSWORD=repl_password
+  #     - POSTGRESQL_USERNAME=postgres
+  #     - POSTGRESQL_PASSWORD=admin
+  #     - POSTGRESQL_DATABASE=processed
+  #     - ALLOW_EMPTY_PASSWORD=yes
+  #     - POSTGRESQL_PGAUDIT_LOG=all
   parsed_sup:
     restart: on-failure
     build: 
@@ -139,7 +161,7 @@ services:
     ports:
       - "6379"
   service:
-    # restart: on-failure
+    restart: on-failure
     depends_on:
       - processed_db
     ports:
@@ -148,9 +170,10 @@ services:
       context: ./src
       dockerfile: ./service/Dockerfile
   service_cache:
-    # restart: on-failure
+    restart: on-failure
     image: redis
   gateway:
     build: src/gateway
+    restart: on-failure
     ports:
       - "3003:80"
