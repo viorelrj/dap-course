@@ -1,5 +1,15 @@
 version: "3.9"
 services:
+  heartbeat:
+    image: docker.elastic.co/beats/heartbeat:7.16.0
+    user: root
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - setup.kibana.host=kibana:5601
+    volumes: 
+      - ./src/heartbeat/heartbeat.docker.yml:/usr/share/heartbeat/heartbeat.yml:ro"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/hostfs:ro
   kibana:
     image: kibana:7.14.2
     environment:
@@ -118,6 +128,10 @@ services:
     build: src/crawler
     restart: always
     scale: 3
+    labels:
+      - co.elastic.monitor/type=icmp
+      - co.elastic.monitor/name=crawler
+      - co.elastic.monitor/hosts=$${data.host}
   crawler_queue:
     image: 'redis'
     labels:
